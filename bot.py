@@ -177,8 +177,12 @@ def phone_(*args):
 
 def show_all(*args):
     iter = contacts.iterator()
+    
     for rec in iter:
-        return rec
+        n_s = []
+        for i in rec:
+            n_s.append(f"{i} : {contacts[i]}")
+        print(n_s)
     
 
 def exit(*args):
