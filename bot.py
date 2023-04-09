@@ -11,51 +11,54 @@ class Field():
         return f"{self.value}"
     
 
-    def __setitem__(self, name, value):
-        self.data[name] = value
-
-
-    def __getitem__(self, name):
-        result = str(self.data[name][0])
-        for value in self.data[name][1:]:
-            result += ", " + str(value)
-        return result
+    
 class Name(Field):
     pass
     
 
 class Phone(Field):
-    def  __init__(self, value):
-        chek_v = value
+    def __init__(self, value):
+        self.__value = None
         self.value = value
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, new_value):
         try:
-            int(chek_v)
+            self.__value = int(new_value)
         except ValueError:
-            print("Only numbers please")
-            self.value = None
+            raise ValueError('Only numbers accepted')
         
     
     
     
 
 class Birthday(Field):
-     def  __init__(self, value):
-        chek_v = value
+    def __init__(self, value):
+        self.__value = None
         self.value = value
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, new_value):
         try:
-            datetime(chek_v)
+            self.__value = datetime(new_value)
         except ValueError:
-            print("You need date")
-            self.value = None
-    
+            raise ValueError('Only date accepted')  
    
 
 
 class Record:
-    def __init__(self, name:Name, phone:Phone=None):
+    def __init__(self, name:Name, phone:Phone=None, birthday:Birthday=None):
         self.name = name
         self.phones = [phone] if phone else []
-    
+        self.birthday = birthday
     def add_phone(self, phone:Phone):
         self.phones.append(phone)
     
@@ -71,38 +74,47 @@ class Record:
                 self.phones[i] = None
                 return f'phone {phone} was deleted'
     
-    #def days_to_birthday(self, name:Name, birthday:Birthday):
-        #Y_E = datetime.now(' %Y')
-       #n_b = birthday + Y_E + 1
-        #d_n = datetime.now('%d, %m, %Y')
-        #result =  n_b - d_n
-        #return result
+    def days_to_birthday(self):
+        if self.birthday:
+            Y_E = datetime.now(' %Y')
+            n_b = self.birthday + Y_E + 1
+            d_n = datetime.now('%d, %m, %Y')
+            result =  n_b - d_n
+            return result
+        return None
         
-   
+class BirthdayMemory(UserDict):
+    def add_record(self, record:Record):
+        self.data[record.name.value] = record
+        return f"Birthday with name {record.birthday} added successfully"
+    def __str__(self) -> str:
+        return '\n'.join([f'{r.name} : {r.phones}' for r in self.data.values()])
+       
 
 class AddressBook(UserDict):
     
     def add_record(self, record:Record):
         self.data[record.name.value] = record
+        return f"Contact with name {record.name} added successfully"
+    
     def __str__(self) -> str:
         return '\n'.join([f'{r.name} : {r.phones}' for r in self.data.values()])
-    def iterator(self, iter_obj, page=3):
+    
+    def iterator(self, page=3):
         start = 0
-        
+
         while True:
-            result = iter_obj[start: start + page]
-           
+            result = list(self.data)[start: start + page]
+
             if not result:
                 break
             yield result
             start += page
-        for i in AddressBook:
-            print(i)
 
     
    
 contacts = AddressBook()
-
+birthdays = BirthdayMemory()
 
 
 def input_error(func):
@@ -126,9 +138,7 @@ def add_ct(*args):
     name = Name(args[0])
     phone = Phone(args[1])
     rec = Record(name, phone)
-    contacts.add_record(rec)
-    return f"Contact {name} with phone {phone} add successful"
-
+    return contacts.add_record(rec)
 
 @input_error    
 def change(*args):
@@ -145,14 +155,30 @@ def delete(*args):
     phone = Phone(args[1])
     rec = contacts.get(name.value)
     rec.delete_phone(phone)
- 
+    if rec:
+        return rec.delete_phone(phone)
+    return f'No record with name {name}'
+
+def birthday(*args):
+    name = Name(args[0])
+    birthday = Birthday(args[1])
+    rec = Record(name, birthday)
+    return birthdays.add_record(rec)
+
+def time(*args):
+    name = Name(args[0])
+    target = birthdays[name]
+    target.days_to_birthday()
+    
     
 @input_error
 def phone_(*args):
     return contacts[args[0]]
 
 def show_all(*args):
-    return contacts
+    iter = contacts.iterator()
+    for rec in iter:
+        return rec
     
 
 def exit(*args):
@@ -166,6 +192,10 @@ def parse_input(text):
     match text_command:
         case 'hello':
             return hello, text.replace('hello', '').split()
+        case 'birthday':
+            return birthday, text.replace('birthday', '').split()
+        case 'time':
+            return time, text.replace('time', '').split()
         case 'add':
             return add_ct, text[len('add'):].split()
         case 'change':
