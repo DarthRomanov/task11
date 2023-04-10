@@ -58,9 +58,11 @@ class Record:
     def __init__(self, name:Name, phone:Phone=None, birthday:Birthday=None):
         self.name = name
         self.phones = [phone] if phone else []
-        self.birthday = birthday
+        self.__birthday = birthday if birthday else None
     def add_phone(self, phone:Phone):
         self.phones.append(phone)
+    
+        
     
     def change_phone(self, old_phone:Phone,  new_phone:Phone):
         for i, p in enumerate(self.phones):
@@ -75,20 +77,14 @@ class Record:
                 return f'phone {phone} was deleted'
     
     def days_to_birthday(self):
-        if self.birthday:
+        if self.__birthday:
             Y_E = datetime.now(' %Y')
-            n_b = self.birthday + Y_E + 1
+            n_b = self.__birthday + Y_E + 1
             d_n = datetime.now('%d, %m, %Y')
             result =  n_b - d_n
             return result
         return None
         
-class BirthdayMemory(UserDict):
-    def add_record(self, record:Record):
-        self.data[record.name.value] = record
-        return f"Birthday with name {record.birthday} added successfully"
-    def __str__(self) -> str:
-        return '\n'.join([f'{r.name} : {r.phones}' for r in self.data.values()])
        
 
 class AddressBook(UserDict):
@@ -114,7 +110,7 @@ class AddressBook(UserDict):
     
    
 contacts = AddressBook()
-birthdays = BirthdayMemory()
+
 
 
 def input_error(func):
@@ -137,7 +133,11 @@ def hello(*args):
 def add_ct(*args):
     name = Name(args[0])
     phone = Phone(args[1])
-    rec = Record(name, phone)
+    if args[2] == None:
+        rec = Record(name, phone)
+    else:
+        birthday = Birthday(args[2])
+        rec = Record(name, phone, birthday)
     return contacts.add_record(rec)
 
 @input_error    
@@ -159,16 +159,13 @@ def delete(*args):
         return rec.delete_phone(phone)
     return f'No record with name {name}'
 
-def birthday(*args):
-    name = Name(args[0])
-    birthday = Birthday(args[1])
-    rec = Record(name, birthday)
-    return birthdays.add_record(rec)
 
-def time(*args):
+
+def to_birthday(*args):
     name = Name(args[0])
-    target = birthdays[name]
-    target.days_to_birthday()
+    rec = Record(name)
+    rec.days_to_birthday
+    
     
     
 @input_error
@@ -197,9 +194,8 @@ def parse_input(text):
         case 'hello':
             return hello, text.replace('hello', '').split()
         case 'birthday':
-            return birthday, text.replace('birthday', '').split()
-        case 'time':
-            return time, text.replace('time', '').split()
+            return to_birthday, text.replace('birthday', '').split()
+        
         case 'add':
             return add_ct, text[len('add'):].split()
         case 'change':
