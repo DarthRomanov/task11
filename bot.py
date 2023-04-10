@@ -61,8 +61,9 @@ class Record:
         self.__birthday = birthday if birthday else None
     def add_phone(self, phone:Phone):
         self.phones.append(phone)
-    
-        
+    def add_bibirthday(self, birthday:Birthday):
+        self.__birthday = birthday
+
     
     def change_phone(self, old_phone:Phone,  new_phone:Phone):
         for i, p in enumerate(self.phones):
@@ -133,7 +134,7 @@ def hello(*args):
 def add_ct(*args):
     name = Name(args[0])
     phone = Phone(args[1])
-    if args[2] == None:
+    if len(args[2]) == 0:
         rec = Record(name, phone)
     else:
         birthday = Birthday(args[2])
@@ -159,6 +160,14 @@ def delete(*args):
         return rec.delete_phone(phone)
     return f'No record with name {name}'
 
+def birthday_date(*args):
+    name = Name(args[0])
+    birthday = Birthday(args[1])
+    rec = contacts.get(name.value)
+    if rec:
+        return rec.add_bibirthday(birthday)
+    return f'No record with name {name}'
+    
 
 
 def to_birthday(*args):
@@ -193,8 +202,10 @@ def parse_input(text):
     match text_command:
         case 'hello':
             return hello, text.replace('hello', '').split()
-        case 'birthday':
+        case 'time':
             return to_birthday, text.replace('birthday', '').split()
+        case 'birthday':
+            return birthday_date, text.replace('birthday', '').split()
         
         case 'add':
             return add_ct, text[len('add'):].split()
